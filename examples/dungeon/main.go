@@ -27,8 +27,8 @@ func main() {
 	camera.Target = rl.Vector2{X: 1, Y: 1}
 
 	for !rl.WindowShouldClose() {
-		camera.Rotation.X = (rl.GetMousePosition().X / float32(rl.GetScreenWidth())) * rl.Pi * 2
-		camera.Rotation.Y = (rl.GetMousePosition().Y / float32(rl.GetScreenHeight())) * (rl.Pi / 2)
+		camera.Rotation.X = rl.Clamp((rl.GetMousePosition().X/float32(rl.GetScreenWidth()))*rl.Pi*2, 0, rl.Pi*2)
+		camera.Rotation.Y = rl.Clamp((rl.GetMousePosition().Y/float32(rl.GetScreenHeight()))*(rl.Pi/2), 0, rl.Pi/2-0.001)
 
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.RayWhite)
