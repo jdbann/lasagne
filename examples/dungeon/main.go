@@ -84,7 +84,7 @@ func main() {
 		camera.Zoom = rl.Clamp(camera.Zoom+rl.GetMouseWheelMove(), 0.5, 8)
 
 		rl.BeginDrawing()
-		rl.ClearBackground(rl.RayWhite)
+		rl.ClearBackground(rl.NewColor(10, 10, 24, 255))
 
 		scene.Draw(camera)
 
