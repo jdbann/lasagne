@@ -34,7 +34,37 @@ func main() {
 		},
 	})
 
+	barrelTexture := rl.LoadTexture("assets/Barrel_strip8.png")
+	barrelObject := lasagne.Object{
+		Position: rl.Vector3{
+			X: 2,
+			Y: 2,
+			Z: 1,
+		},
+		Texture: barrelTexture,
+		Size: rl.Vector3{
+			X: 14,
+			Y: 14,
+			Z: 8,
+		},
+	}
+	chairTexture := rl.LoadTexture("assets/Chair_strip12.png")
+	chairObject := lasagne.Object{
+		Position: rl.Vector3{
+			X: 1,
+			Y: 3,
+			Z: 1,
+		},
+		Texture: chairTexture,
+		Size: rl.Vector3{
+			X: 12,
+			Y: 12,
+			Z: 12,
+		},
+	}
+
 	scene := lasagne.NewScene(lasagne.SceneParams{
+		Objects: []lasagne.Object{barrelObject, chairObject},
 		TileMap: tileMap,
 		TileSet: *tileSet,
 	})

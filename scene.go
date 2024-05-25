@@ -7,17 +7,20 @@ import (
 )
 
 type Scene struct {
+	objects []Object
 	tileMap TileMap
 	tileSet TileSet
 }
 
 type SceneParams struct {
+	Objects []Object
 	TileMap TileMap
 	TileSet TileSet
 }
 
 func NewScene(params SceneParams) Scene {
 	return Scene{
+		objects: params.Objects,
 		tileMap: params.TileMap,
 		tileSet: params.TileSet,
 	}
@@ -53,6 +56,7 @@ func (s Scene) Draw(camera Camera) {
 
 	frameStep := float32(math.Sin(float64(camera.Rotation.Y))) * camera.Zoom / cosCameraY
 	subframes := int(math.Ceil(float64(frameStep)))
+	zStep := frameStep * s.tileSet.size
 
 	yFrom, yTo := 0, len(s.tileMap.tiles[0])-1
 	if math.Cos(float64(camera.Rotation.X)) < 0 {
@@ -65,7 +69,6 @@ func (s Scene) Draw(camera Camera) {
 	}
 
 	for z := range s.tileMap.tiles {
-		zStep := frameStep * s.tileSet.size * float32(z)
 		for yNext, yDone := iterator(yFrom, yTo); !yDone(); {
 			y := yNext()
 			for xNext, xDone := iterator(xFrom, xTo); !xDone(); {
@@ -81,13 +84,31 @@ func (s Scene) Draw(camera Camera) {
 						rl.DrawTexturePro(
 							s.tileSet.textures[tileIdx],
 							rl.NewRectangle(float32(frame)*s.tileSet.size, 0, s.tileSet.size, s.tileSet.size),
-							rl.NewRectangle(tilePosition.X, tilePosition.Y-zStep-frameStep*float32(frame)-float32(subframe), tileSize, tileSize),
+							rl.NewRectangle(tilePosition.X, tilePosition.Y-zStep*float32(z)-frameStep*float32(frame)-float32(subframe), tileSize, tileSize),
 							tileOrigin,
 							tileRotation,
 							rl.White,
 						)
 					}
 				}
+			}
+		}
+	}
+
+	for _, object := range s.objects {
+		objectSize := rl.Vector2{X: object.Size.X * camera.Zoom, Y: object.Size.Y * camera.Zoom}
+		objectOrigin := rl.Vector2{X: objectSize.X / 2, Y: objectSize.Y / 2}
+		for frame := 0; frame < int(object.Size.Z); frame++ {
+			for subframe := 0; subframe <= subframes; subframe++ {
+				position := rl.Vector3Transform(object.Position, tileMatrix)
+				rl.DrawTexturePro(
+					object.Texture,
+					rl.NewRectangle(float32(frame)*object.Size.X, 0, object.Size.X, object.Size.Y),
+					rl.NewRectangle(position.X, position.Y-zStep*object.Position.Z-frameStep*float32(frame)-float32(subframe), objectSize.X, objectSize.Y),
+					objectOrigin,
+					tileRotation,
+					rl.White,
+				)
 			}
 		}
 	}
