@@ -1,7 +1,9 @@
 package lasagne
 
 import (
+	"cmp"
 	"math"
+	"slices"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -42,7 +44,7 @@ func (s Scene) Draw(camera Camera) {
 	cosCameraY := float32(math.Cos(float64(camera.Rotation.Y)))
 	rl.Scalef(1, cosCameraY, 1)
 
-	tileMatrix := combine(rl.MatrixMultiply,
+	cameraMatrix := combine(rl.MatrixMultiply,
 		rl.MatrixTranslate(-camera.Target.X, -camera.Target.Y, 0), // Focus camera on target
 		rl.MatrixTranslate(0.5, 0.5, 0),                           // Adjust for origin of tiles
 		rl.MatrixScale(s.tileSet.size, s.tileSet.size, 1),         // Scale to tile size
@@ -52,41 +54,62 @@ func (s Scene) Draw(camera Camera) {
 
 	tileSize := s.tileSet.size * camera.Zoom
 	tileOrigin := rl.Vector2{X: tileSize / 2, Y: tileSize / 2}
-	tileRotation := camera.Rotation.X * rl.Rad2deg
-
 	frameStep := float32(math.Sin(float64(camera.Rotation.Y))) * camera.Zoom / cosCameraY
-	subframes := int(math.Ceil(float64(frameStep)))
-	zStep := frameStep * s.tileSet.size
 
+	v := renderValues{
+		frameStep:      frameStep,
+		subframes:      int(math.Ceil(float64(frameStep))),
+		cameraMatrix:   cameraMatrix,
+		cameraRotation: camera.Rotation.X * rl.Rad2deg,
+		zStep:          frameStep * s.tileSet.size,
+	}
+
+	// Get order to render world in based on camera rotation
+	yDir := cmp.Compare(math.Cos(float64(camera.Rotation.X)), 0)
 	yFrom, yTo := 0, len(s.tileMap.tiles[0])-1
-	if math.Cos(float64(camera.Rotation.X)) < 0 {
+	if yDir < 0 {
 		yFrom, yTo = yTo, yFrom
 	}
 
+	xDir := cmp.Compare(math.Sin(float64(camera.Rotation.X)), 0)
 	xFrom, xTo := 0, len(s.tileMap.tiles[0][0])-1
-	if math.Sin(float64(camera.Rotation.X)) < 0 {
+	if xDir < 0 {
 		xFrom, xTo = xTo, xFrom
 	}
+
+	// Setup objects iterator with a function to compare positions with distance from camera
+	compareInCamera := cmpVector3Distance(xDir, yDir)
+	slices.SortFunc(s.objects, func(a, b Object) int {
+		return compareInCamera(a.Position, b.Position)
+	})
+	objectNext, objectDone, objectDrain := objectsIterator(s.objects, compareInCamera)
 
 	for z := range s.tileMap.tiles {
 		for yNext, yDone := iterator(yFrom, yTo); !yDone(); {
 			y := yNext()
 			for xNext, xDone := iterator(xFrom, xTo); !xDone(); {
 				x := xNext()
+
+				// Render any objects which lower in the render order than the current tile
+				for !objectDone(rl.Vector3{X: float32(x), Y: float32(y), Z: float32(z)}) {
+					object := objectNext()
+					renderObject(object, camera, v)
+				}
+
 				tileIdx := s.tileMap.tiles[z][y][x]
 				if tileIdx == -1 {
 					continue
 				}
 
 				for frame := 0; frame < int(s.tileSet.size); frame++ {
-					for subframe := 0; subframe <= subframes; subframe++ {
-						tilePosition := rl.Vector3Transform(rl.Vector3{X: float32(x), Y: float32(y)}, tileMatrix)
+					for subframe := 0; subframe <= v.subframes; subframe++ {
+						tilePosition := rl.Vector3Transform(rl.Vector3{X: float32(x), Y: float32(y)}, v.cameraMatrix)
 						rl.DrawTexturePro(
 							s.tileSet.textures[tileIdx],
 							rl.NewRectangle(float32(frame)*s.tileSet.size, 0, s.tileSet.size, s.tileSet.size),
-							rl.NewRectangle(tilePosition.X, tilePosition.Y-zStep*float32(z)-frameStep*float32(frame)-float32(subframe), tileSize, tileSize),
+							rl.NewRectangle(tilePosition.X, tilePosition.Y-v.zStep*float32(z)-v.frameStep*float32(frame)-float32(subframe), tileSize, tileSize),
 							tileOrigin,
-							tileRotation,
+							v.cameraRotation,
 							rl.White,
 						)
 					}
@@ -95,22 +118,9 @@ func (s Scene) Draw(camera Camera) {
 		}
 	}
 
-	for _, object := range s.objects {
-		objectSize := rl.Vector2{X: object.Size.X * camera.Zoom, Y: object.Size.Y * camera.Zoom}
-		objectOrigin := rl.Vector2{X: objectSize.X / 2, Y: objectSize.Y / 2}
-		for frame := 0; frame < int(object.Size.Z); frame++ {
-			for subframe := 0; subframe <= subframes; subframe++ {
-				position := rl.Vector3Transform(object.Position, tileMatrix)
-				rl.DrawTexturePro(
-					object.Texture,
-					rl.NewRectangle(float32(frame)*object.Size.X, 0, object.Size.X, object.Size.Y),
-					rl.NewRectangle(position.X, position.Y-zStep*object.Position.Z-frameStep*float32(frame)-float32(subframe), objectSize.X, objectSize.Y),
-					objectOrigin,
-					tileRotation,
-					rl.White,
-				)
-			}
-		}
+	// Render remaining objects
+	for _, object := range objectDrain() {
+		renderObject(object, camera, v)
 	}
 }
 
@@ -126,6 +136,20 @@ func (s Scene) MoveCamera(c Camera, v rl.Vector3) Camera {
 	c.Target = rl.Vector3Subtract(c.Target, d)
 
 	return c
+}
+
+func cmpVector3Distance(xDir, yDir int) func(a, b rl.Vector3) int {
+	return func(a, b rl.Vector3) int {
+		if v := cmp.Compare(a.Z, b.Z); v != 0 {
+			return v
+		}
+
+		if v := cmp.Compare(a.Y, b.Y); v != 0 {
+			return v * yDir
+		}
+
+		return cmp.Compare(a.Y, b.Y) * xDir
+	}
 }
 
 func combine[T any](combineFn func(T, T) T, in ...T) T {
