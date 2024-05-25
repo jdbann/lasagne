@@ -36,6 +36,9 @@ func (s Scene) Draw(camera Camera) {
 	// Scale to zoom level
 	rl.Scalef(camera.Zoom, camera.Zoom, 1)
 
+	// Rotate around target
+	rl.Rotatef(camera.Rotation.X*rl.Rad2deg, 0, 0, 1)
+
 	// Translate to camera target
 	rl.Translatef(
 		-camera.Target.X*s.tileSet.size,
