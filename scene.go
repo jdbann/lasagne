@@ -90,6 +90,20 @@ func (s Scene) Draw(camera Camera) {
 	}
 }
 
+func (s Scene) MoveCamera(c Camera, v rl.Vector2) Camera {
+	// Scale y in viewport to simulate vertical rotation
+	cosCameraY := float32(math.Cos(float64(c.Rotation.Y)))
+
+	d := rl.Vector2Transform(v, combine(
+		rl.MatrixMultiply,
+		rl.MatrixScale(1/c.Zoom/s.tileSet.size, 1/c.Zoom/s.tileSet.size/cosCameraY, 1),
+		rl.MatrixRotateZ(c.Rotation.X),
+	))
+	newTarget := rl.Vector2Subtract(c.Target, d)
+	c.Target = newTarget
+	return c
+}
+
 func combine[T any](combineFn func(T, T) T, in ...T) T {
 	out := in[0]
 	for i := 1; i < len(in); i++ {

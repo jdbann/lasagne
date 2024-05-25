@@ -33,8 +33,15 @@ func main() {
 	camera.Target = rl.Vector2{X: 2, Y: 2}
 
 	for !rl.WindowShouldClose() {
-		camera.Rotation.X = rl.Clamp((rl.GetMousePosition().X/float32(rl.GetScreenWidth()))*rl.Pi*2, 0, rl.Pi*2)
-		camera.Rotation.Y = rl.Clamp((rl.GetMousePosition().Y/float32(rl.GetScreenHeight()))*(rl.Pi/2), 0, rl.Pi/2-0.001)
+		mouseDelta := rl.GetMouseDelta()
+		if rl.IsMouseButtonDown(rl.MouseButtonLeft) {
+			camera.Rotation.X = rl.Wrap(camera.Rotation.X+(mouseDelta.X/float32(rl.GetScreenWidth()))*rl.Pi*2, 0, rl.Pi*2)
+			camera.Rotation.Y = rl.Clamp(camera.Rotation.Y+(mouseDelta.Y/float32(rl.GetScreenHeight()))*(rl.Pi/2), 0, rl.Pi/2-0.001)
+		} else if rl.IsKeyDown(rl.KeySpace) {
+			camera = scene.MoveCamera(camera, mouseDelta)
+		}
+
+		camera.Zoom = rl.Clamp(camera.Zoom+rl.GetMouseWheelMove(), 0.5, 8)
 
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.RayWhite)
