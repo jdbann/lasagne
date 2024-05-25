@@ -35,6 +35,10 @@ func (s Scene) Draw(camera Camera) {
 		0,
 	)
 
+	// Scale y in viewport to simulate vertical rotation
+	cosCameraY := float32(math.Cos(float64(camera.Rotation.Y)))
+	rl.Scalef(1, cosCameraY, 1)
+
 	tileMatrix := combine(rl.MatrixMultiply,
 		rl.MatrixTranslate(-camera.Target.X, -camera.Target.Y, 0), // Focus camera on target
 		rl.MatrixTranslate(0.5, 0.5, 0),                           // Adjust for origin of tiles
@@ -47,21 +51,23 @@ func (s Scene) Draw(camera Camera) {
 	tileOrigin := rl.Vector2{X: tileSize / 2, Y: tileSize / 2}
 	tileRotation := camera.Rotation.X * rl.Rad2deg
 
-	// Scale y in viewport to simulate vertical rotation
-	cosCameraY := float32(math.Cos(float64(camera.Rotation.Y)))
-	rl.Scalef(1, cosCameraY, 1)
+	frameStep := camera.Zoom / cosCameraY
 
 	for y := range s.tileMap.tiles {
 		for x, tile := range s.tileMap.tiles[y] {
-			tilePosition := rl.Vector3Transform(rl.Vector3{X: float32(x), Y: float32(y)}, tileMatrix)
-			rl.DrawTexturePro(
-				s.tileSet.textures[tile],
-				rl.NewRectangle(240, 0, s.tileSet.size, s.tileSet.size),
-				rl.NewRectangle(tilePosition.X, tilePosition.Y, tileSize, tileSize),
-				tileOrigin,
-				tileRotation,
-				rl.White,
-			)
+			for frame := 0; frame < int(s.tileSet.size); frame++ {
+				for subframe := 0; subframe < int(math.Ceil(float64(frameStep))); subframe++ {
+					tilePosition := rl.Vector3Transform(rl.Vector3{X: float32(x), Y: float32(y)}, tileMatrix)
+					rl.DrawTexturePro(
+						s.tileSet.textures[tile],
+						rl.NewRectangle(float32(frame)*s.tileSet.size, 0, s.tileSet.size, s.tileSet.size),
+						rl.NewRectangle(tilePosition.X, tilePosition.Y-frameStep*float32(frame)-float32(subframe), tileSize, tileSize),
+						tileOrigin,
+						tileRotation,
+						rl.White,
+					)
+				}
+			}
 		}
 	}
 }
