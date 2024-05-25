@@ -35,32 +35,41 @@ func (s Scene) Draw(camera Camera) {
 		0,
 	)
 
-	// Scale to zoom level, scaling y to simulate camera pitch
-	cosCameraY := float32(math.Cos(float64(camera.Rotation.Y)))
-	rl.Scalef(camera.Zoom, camera.Zoom*cosCameraY, 1)
-
-	// Rotate around target
-	rl.Rotatef(camera.Rotation.X*rl.Rad2deg, 0, 0, 1)
-
-	// Translate to camera target
-	rl.Translatef(
-		-camera.Target.X*s.tileSet.size,
-		-camera.Target.Y*s.tileSet.size,
-		0,
+	tileMatrix := combine(rl.MatrixMultiply,
+		rl.MatrixTranslate(-camera.Target.X, -camera.Target.Y, 0), // Focus camera on target
+		rl.MatrixTranslate(0.5, 0.5, 0),                           // Adjust for origin of tiles
+		rl.MatrixScale(s.tileSet.size, s.tileSet.size, 1),         // Scale to tile size
+		rl.MatrixScale(camera.Zoom, camera.Zoom, 1),               // Scale to zoom level
+		rl.MatrixRotateZ(-camera.Rotation.X),                      // Horizontal rotation
 	)
 
-	origin := rl.Vector2{X: s.tileSet.size / 2, Y: s.tileSet.size / 2}
+	tileSize := s.tileSet.size * camera.Zoom
+	tileOrigin := rl.Vector2{X: tileSize / 2, Y: tileSize / 2}
+	tileRotation := camera.Rotation.X * rl.Rad2deg
+
+	// Scale y in viewport to simulate vertical rotation
+	cosCameraY := float32(math.Cos(float64(camera.Rotation.Y)))
+	rl.Scalef(1, cosCameraY, 1)
 
 	for y := range s.tileMap.tiles {
 		for x, tile := range s.tileMap.tiles[y] {
+			tilePosition := rl.Vector3Transform(rl.Vector3{X: float32(x), Y: float32(y)}, tileMatrix)
 			rl.DrawTexturePro(
 				s.tileSet.textures[tile],
 				rl.NewRectangle(240, 0, s.tileSet.size, s.tileSet.size),
-				rl.NewRectangle((float32(x)+.5)*s.tileSet.size, (float32(y)+.5)*s.tileSet.size, s.tileSet.size, s.tileSet.size),
-				origin,
-				0,
+				rl.NewRectangle(tilePosition.X, tilePosition.Y, tileSize, tileSize),
+				tileOrigin,
+				tileRotation,
 				rl.White,
 			)
 		}
 	}
+}
+
+func combine[T any](combineFn func(T, T) T, in ...T) T {
+	out := in[0]
+	for i := 1; i < len(in); i++ {
+		out = combineFn(out, in[i])
+	}
+	return out
 }
