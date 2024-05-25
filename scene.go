@@ -21,7 +21,13 @@ func NewScene(params SceneParams) Scene {
 	}
 }
 
-func (s Scene) Draw(_ Camera) {
+func (s Scene) Draw(camera Camera) {
+	// Save and restore current transformation matrix
+	rl.PushMatrix()
+	defer rl.PopMatrix()
+
+	camera.ApplyMatrix()
+
 	for y := range s.tileMap.tiles {
 		for x, tile := range s.tileMap.tiles[y] {
 			rl.DrawTexturePro(
