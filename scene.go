@@ -51,15 +51,28 @@ func (s Scene) Draw(camera Camera) {
 	tileOrigin := rl.Vector2{X: tileSize / 2, Y: tileSize / 2}
 	tileRotation := camera.Rotation.X * rl.Rad2deg
 
-	frameStep := camera.Zoom / cosCameraY
+	frameStep := float32(math.Sin(float64(camera.Rotation.Y))) * camera.Zoom / cosCameraY
+	subframes := int(math.Ceil(float64(frameStep)))
 
-	for y := range s.tileMap.tiles {
-		for x, tile := range s.tileMap.tiles[y] {
+	yFrom, yTo := 0, len(s.tileMap.tiles)-1
+	if math.Cos(float64(camera.Rotation.X)) < 0 {
+		yFrom, yTo = yTo, yFrom
+	}
+
+	xFrom, xTo := 0, len(s.tileMap.tiles[0])-1
+	if math.Sin(float64(camera.Rotation.X)) < 0 {
+		xFrom, xTo = xTo, xFrom
+	}
+
+	for yNext, yDone := iterator(yFrom, yTo); !yDone(); {
+		y := yNext()
+		for xNext, xDone := iterator(xFrom, xTo); !xDone(); {
+			x := xNext()
 			for frame := 0; frame < int(s.tileSet.size); frame++ {
-				for subframe := 0; subframe < int(math.Ceil(float64(frameStep))); subframe++ {
+				for subframe := 0; subframe <= subframes; subframe++ {
 					tilePosition := rl.Vector3Transform(rl.Vector3{X: float32(x), Y: float32(y)}, tileMatrix)
 					rl.DrawTexturePro(
-						s.tileSet.textures[tile],
+						s.tileSet.textures[s.tileMap.tiles[y][x]],
 						rl.NewRectangle(float32(frame)*s.tileSet.size, 0, s.tileSet.size, s.tileSet.size),
 						rl.NewRectangle(tilePosition.X, tilePosition.Y-frameStep*float32(frame)-float32(subframe), tileSize, tileSize),
 						tileOrigin,
@@ -78,4 +91,26 @@ func combine[T any](combineFn func(T, T) T, in ...T) T {
 		out = combineFn(out, in[i])
 	}
 	return out
+}
+
+func iterator(from, to int) (func() int, func() bool) {
+	currentVal, step := from, 1
+	if from > to {
+		step = -1
+	}
+	done := false
+
+	nextFn := func() int {
+		out := currentVal
+		if out == to {
+			done = true
+		} else {
+			currentVal += step
+		}
+		return out
+	}
+
+	doneFn := func() bool { return done }
+
+	return nextFn, doneFn
 }
