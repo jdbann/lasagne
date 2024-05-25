@@ -19,10 +19,10 @@ func (ts *TileSet) AddTile(texture rl.Texture2D) int {
 }
 
 type TileMap struct {
-	tiles [][]int
+	tiles [][][]int
 }
 
-func NewTileMap(tiles [][]int) TileMap {
+func NewTileMap(tiles [][][]int) TileMap {
 	return TileMap{
 		tiles: tiles,
 	}

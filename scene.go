@@ -54,53 +54,56 @@ func (s Scene) Draw(camera Camera) {
 	frameStep := float32(math.Sin(float64(camera.Rotation.Y))) * camera.Zoom / cosCameraY
 	subframes := int(math.Ceil(float64(frameStep)))
 
-	yFrom, yTo := 0, len(s.tileMap.tiles)-1
+	yFrom, yTo := 0, len(s.tileMap.tiles[0])-1
 	if math.Cos(float64(camera.Rotation.X)) < 0 {
 		yFrom, yTo = yTo, yFrom
 	}
 
-	xFrom, xTo := 0, len(s.tileMap.tiles[0])-1
+	xFrom, xTo := 0, len(s.tileMap.tiles[0][0])-1
 	if math.Sin(float64(camera.Rotation.X)) < 0 {
 		xFrom, xTo = xTo, xFrom
 	}
 
-	for yNext, yDone := iterator(yFrom, yTo); !yDone(); {
-		y := yNext()
-		for xNext, xDone := iterator(xFrom, xTo); !xDone(); {
-			x := xNext()
-			tileIdx := s.tileMap.tiles[y][x]
-			if tileIdx == -1 {
-				continue
-			}
+	for z := range s.tileMap.tiles {
+		zStep := frameStep * s.tileSet.size * float32(z)
+		for yNext, yDone := iterator(yFrom, yTo); !yDone(); {
+			y := yNext()
+			for xNext, xDone := iterator(xFrom, xTo); !xDone(); {
+				x := xNext()
+				tileIdx := s.tileMap.tiles[z][y][x]
+				if tileIdx == -1 {
+					continue
+				}
 
-			for frame := 0; frame < int(s.tileSet.size); frame++ {
-				for subframe := 0; subframe <= subframes; subframe++ {
-					tilePosition := rl.Vector3Transform(rl.Vector3{X: float32(x), Y: float32(y)}, tileMatrix)
-					rl.DrawTexturePro(
-						s.tileSet.textures[tileIdx],
-						rl.NewRectangle(float32(frame)*s.tileSet.size, 0, s.tileSet.size, s.tileSet.size),
-						rl.NewRectangle(tilePosition.X, tilePosition.Y-frameStep*float32(frame)-float32(subframe), tileSize, tileSize),
-						tileOrigin,
-						tileRotation,
-						rl.White,
-					)
+				for frame := 0; frame < int(s.tileSet.size); frame++ {
+					for subframe := 0; subframe <= subframes; subframe++ {
+						tilePosition := rl.Vector3Transform(rl.Vector3{X: float32(x), Y: float32(y)}, tileMatrix)
+						rl.DrawTexturePro(
+							s.tileSet.textures[tileIdx],
+							rl.NewRectangle(float32(frame)*s.tileSet.size, 0, s.tileSet.size, s.tileSet.size),
+							rl.NewRectangle(tilePosition.X, tilePosition.Y-zStep-frameStep*float32(frame)-float32(subframe), tileSize, tileSize),
+							tileOrigin,
+							tileRotation,
+							rl.White,
+						)
+					}
 				}
 			}
 		}
 	}
 }
 
-func (s Scene) MoveCamera(c Camera, v rl.Vector2) Camera {
+func (s Scene) MoveCamera(c Camera, v rl.Vector3) Camera {
 	// Scale y in viewport to simulate vertical rotation
 	cosCameraY := float32(math.Cos(float64(c.Rotation.Y)))
 
-	d := rl.Vector2Transform(v, combine(
+	d := rl.Vector3Transform(v, combine(
 		rl.MatrixMultiply,
 		rl.MatrixScale(1/c.Zoom/s.tileSet.size, 1/c.Zoom/s.tileSet.size/cosCameraY, 1),
 		rl.MatrixRotateZ(c.Rotation.X),
 	))
-	newTarget := rl.Vector2Subtract(c.Target, d)
-	c.Target = newTarget
+	c.Target = rl.Vector3Subtract(c.Target, d)
+
 	return c
 }
 

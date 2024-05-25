@@ -16,12 +16,22 @@ func main() {
 	floorTile := tileSet.AddTile(floorTexture)
 	floorPatternTexture := rl.LoadTexture("assets/FloorCentrePattern_strip16.png")
 	floorPatternTile := tileSet.AddTile(floorPatternTexture)
+	wallTexture := rl.LoadTexture("assets/WallCentreA_strip16.png")
+	wallTile := tileSet.AddTile(wallTexture)
 
-	tileMap := lasagne.NewTileMap([][]int{
-		{floorTile, floorTile, floorTile, -1},
-		{floorTile, floorTile, floorTile, bridgeTile},
-		{floorPatternTile, floorTile, floorTile, -1},
-		{floorPatternTile, floorPatternTile, floorTile, -1},
+	tileMap := lasagne.NewTileMap([][][]int{
+		{
+			{floorTile, floorTile, floorTile, -1},
+			{floorTile, floorTile, floorTile, bridgeTile},
+			{floorPatternTile, floorTile, floorTile, -1},
+			{floorPatternTile, floorPatternTile, floorTile, -1},
+		},
+		{
+			{-1, -1, -1, -1},
+			{-1, wallTile, -1, -1},
+			{-1, -1, -1, -1},
+			{-1, -1, -1, -1},
+		},
 	})
 
 	scene := lasagne.NewScene(lasagne.SceneParams{
@@ -30,7 +40,7 @@ func main() {
 	})
 
 	camera := lasagne.NewCamera()
-	camera.Target = rl.Vector2{X: 2, Y: 2}
+	camera.Target = rl.Vector3{X: 2, Y: 2, Z: 1}
 
 	for !rl.WindowShouldClose() {
 		mouseDelta := rl.GetMouseDelta()
@@ -38,7 +48,7 @@ func main() {
 			camera.Rotation.X = rl.Wrap(camera.Rotation.X+(mouseDelta.X/float32(rl.GetScreenWidth()))*rl.Pi*2, 0, rl.Pi*2)
 			camera.Rotation.Y = rl.Clamp(camera.Rotation.Y+(mouseDelta.Y/float32(rl.GetScreenHeight()))*(rl.Pi/2), 0, rl.Pi/2-0.001)
 		} else if rl.IsKeyDown(rl.KeySpace) {
-			camera = scene.MoveCamera(camera, mouseDelta)
+			camera = scene.MoveCamera(camera, rl.Vector3{X: mouseDelta.X, Y: mouseDelta.Y})
 		}
 
 		camera.Zoom = rl.Clamp(camera.Zoom+rl.GetMouseWheelMove(), 0.5, 8)
