@@ -13,7 +13,7 @@ type Camera struct {
 func NewCamera() Camera {
 	return Camera{
 		Target:   rl.Vector2{X: 0, Y: 0},
-		Rotation: rl.Vector2{X: rl.Pi / 4, Y: 2 * rl.Pi / 3},
+		Rotation: rl.Vector2{X: rl.Pi / 4, Y: rl.Pi / 3},
 		Zoom:     2,
 	}
 }

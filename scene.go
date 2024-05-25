@@ -1,6 +1,8 @@
 package lasagne
 
 import (
+	"math"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -33,8 +35,9 @@ func (s Scene) Draw(camera Camera) {
 		0,
 	)
 
-	// Scale to zoom level
-	rl.Scalef(camera.Zoom, camera.Zoom, 1)
+	// Scale to zoom level, scaling y to simulate camera pitch
+	cosCameraY := float32(math.Cos(float64(camera.Rotation.Y)))
+	rl.Scalef(camera.Zoom, camera.Zoom*cosCameraY, 1)
 
 	// Rotate around target
 	rl.Rotatef(camera.Rotation.X*rl.Rad2deg, 0, 0, 1)
