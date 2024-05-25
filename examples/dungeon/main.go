@@ -14,7 +14,8 @@ func main() {
 	bridgeTile := tileSet.AddTile(bridgeTexture)
 
 	tileMap := lasagne.NewTileMap([][]int{
-		{bridgeTile},
+		{bridgeTile, bridgeTile},
+		{bridgeTile, bridgeTile},
 	})
 
 	scene := lasagne.NewScene(lasagne.SceneParams{
@@ -23,6 +24,7 @@ func main() {
 	})
 
 	camera := lasagne.NewCamera()
+	camera.Target = rl.Vector2{X: 1, Y: 1}
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()

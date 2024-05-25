@@ -17,12 +17,3 @@ func NewCamera() Camera {
 		Zoom:     2,
 	}
 }
-
-func (c Camera) ApplyMatrix() {
-	// Translate to put target position in center of screen
-	rl.Translatef(
-		float32(rl.GetScreenWidth()/2)+c.Target.X,
-		float32(rl.GetScreenHeight()/2)+c.Target.Y,
-		0,
-	)
-}
