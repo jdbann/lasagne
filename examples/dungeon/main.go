@@ -12,10 +12,16 @@ func main() {
 	tileSet := lasagne.NewTileSet(16)
 	bridgeTexture := rl.LoadTexture("assets/Bridge_strip16.png")
 	bridgeTile := tileSet.AddTile(bridgeTexture)
+	floorTexture := rl.LoadTexture("assets/FloorCentrePlain_strip16.png")
+	floorTile := tileSet.AddTile(floorTexture)
+	floorPatternTexture := rl.LoadTexture("assets/FloorCentrePattern_strip16.png")
+	floorPatternTile := tileSet.AddTile(floorPatternTexture)
 
 	tileMap := lasagne.NewTileMap([][]int{
-		{bridgeTile, bridgeTile},
-		{bridgeTile, bridgeTile},
+		{floorTile, floorTile, floorTile, -1},
+		{floorTile, floorTile, floorTile, bridgeTile},
+		{floorPatternTile, floorTile, floorTile, -1},
+		{floorPatternTile, floorPatternTile, floorTile, -1},
 	})
 
 	scene := lasagne.NewScene(lasagne.SceneParams{
@@ -24,7 +30,7 @@ func main() {
 	})
 
 	camera := lasagne.NewCamera()
-	camera.Target = rl.Vector2{X: 1, Y: 1}
+	camera.Target = rl.Vector2{X: 2, Y: 2}
 
 	for !rl.WindowShouldClose() {
 		camera.Rotation.X = rl.Clamp((rl.GetMousePosition().X/float32(rl.GetScreenWidth()))*rl.Pi*2, 0, rl.Pi*2)

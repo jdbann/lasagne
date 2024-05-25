@@ -68,11 +68,16 @@ func (s Scene) Draw(camera Camera) {
 		y := yNext()
 		for xNext, xDone := iterator(xFrom, xTo); !xDone(); {
 			x := xNext()
+			tileIdx := s.tileMap.tiles[y][x]
+			if tileIdx == -1 {
+				continue
+			}
+
 			for frame := 0; frame < int(s.tileSet.size); frame++ {
 				for subframe := 0; subframe <= subframes; subframe++ {
 					tilePosition := rl.Vector3Transform(rl.Vector3{X: float32(x), Y: float32(y)}, tileMatrix)
 					rl.DrawTexturePro(
-						s.tileSet.textures[s.tileMap.tiles[y][x]],
+						s.tileSet.textures[tileIdx],
 						rl.NewRectangle(float32(frame)*s.tileSet.size, 0, s.tileSet.size, s.tileSet.size),
 						rl.NewRectangle(tilePosition.X, tilePosition.Y-frameStep*float32(frame)-float32(subframe), tileSize, tileSize),
 						tileOrigin,
