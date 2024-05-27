@@ -9,13 +9,13 @@ import (
 )
 
 type Scene struct {
-	objects []Object
+	objects []*Object
 	tileMap *TileMap
 	tileSet *TileSet
 }
 
 type SceneParams struct {
-	Objects []Object
+	Objects []*Object
 	TileMap *TileMap
 	TileSet *TileSet
 }
@@ -26,6 +26,10 @@ func NewScene(params SceneParams) *Scene {
 		tileMap: params.TileMap,
 		tileSet: params.TileSet,
 	}
+}
+
+func (s *Scene) AddObject(object *Object) {
+	s.objects = append(s.objects, object)
 }
 
 func (s Scene) Draw(camera *Camera) {
@@ -79,7 +83,7 @@ func (s Scene) Draw(camera *Camera) {
 
 	// Setup objects iterator with a function to compare positions with distance from camera
 	compareInCamera := cmpVector3Distance(xDir, yDir)
-	slices.SortFunc(s.objects, func(a, b Object) int {
+	slices.SortFunc(s.objects, func(a, b *Object) int {
 		return compareInCamera(a.Position, b.Position)
 	})
 	objectNext, objectDone, objectDrain := objectsIterator(s.objects, compareInCamera)
@@ -134,6 +138,15 @@ func (s Scene) MoveCamera(c *Camera, v rl.Vector3) {
 		rl.MatrixRotateZ(c.Rotation.X),
 	))
 	c.Target = rl.Vector3Subtract(c.Target, d)
+}
+
+func (s *Scene) RemoveObject(object *Object) bool {
+	idx := slices.Index(s.objects, object)
+	if idx == -1 {
+		return false
+	}
+	s.objects = slices.Delete(s.objects, idx, idx+1)
+	return true
 }
 
 func cmpVector3Distance(xDir, yDir int) func(a, b rl.Vector3) int {

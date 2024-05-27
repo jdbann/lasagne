@@ -16,10 +16,10 @@ type renderValues struct {
 	zStep          float32
 }
 
-func objectsIterator(objects []Object, compareFn func(a, b rl.Vector3) int) (func() Object, func(rl.Vector3) bool, func() []Object) {
+func objectsIterator(objects []*Object, compareFn func(a, b rl.Vector3) int) (func() *Object, func(rl.Vector3) bool, func() []*Object) {
 	objectIdx := 0
 
-	nextFn := func() Object {
+	nextFn := func() *Object {
 		nextIdx := objectIdx
 		objectIdx++
 		return objects[nextIdx]
@@ -29,14 +29,14 @@ func objectsIterator(objects []Object, compareFn func(a, b rl.Vector3) int) (fun
 		return objectIdx == len(objects) || compareFn(objects[objectIdx].Position, v) >= 0
 	}
 
-	drainFn := func() []Object {
+	drainFn := func() []*Object {
 		return objects[objectIdx:]
 	}
 
 	return nextFn, doneFn, drainFn
 }
 
-func renderObject(object Object, camera *Camera, v renderValues) {
+func renderObject(object *Object, camera *Camera, v renderValues) {
 	objectSize := rl.Vector2{X: object.Size.X * camera.Zoom, Y: object.Size.Y * camera.Zoom}
 	objectOrigin := rl.Vector2{X: objectSize.X / 2, Y: objectSize.Y / 2}
 	for frame := 0; frame < int(object.Size.Z); frame++ {
