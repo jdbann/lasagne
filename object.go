@@ -36,7 +36,7 @@ func objectsIterator(objects []Object, compareFn func(a, b rl.Vector3) int) (fun
 	return nextFn, doneFn, drainFn
 }
 
-func renderObject(object Object, camera Camera, v renderValues) {
+func renderObject(object Object, camera *Camera, v renderValues) {
 	objectSize := rl.Vector2{X: object.Size.X * camera.Zoom, Y: object.Size.Y * camera.Zoom}
 	objectOrigin := rl.Vector2{X: objectSize.X / 2, Y: objectSize.Y / 2}
 	for frame := 0; frame < int(object.Size.Z); frame++ {

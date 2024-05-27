@@ -10,25 +10,25 @@ import (
 
 type Scene struct {
 	objects []Object
-	tileMap TileMap
-	tileSet TileSet
+	tileMap *TileMap
+	tileSet *TileSet
 }
 
 type SceneParams struct {
 	Objects []Object
-	TileMap TileMap
-	TileSet TileSet
+	TileMap *TileMap
+	TileSet *TileSet
 }
 
-func NewScene(params SceneParams) Scene {
-	return Scene{
+func NewScene(params SceneParams) *Scene {
+	return &Scene{
 		objects: params.Objects,
 		tileMap: params.TileMap,
 		tileSet: params.TileSet,
 	}
 }
 
-func (s Scene) Draw(camera Camera) {
+func (s Scene) Draw(camera *Camera) {
 	// Save and restore current transformation matrix
 	rl.PushMatrix()
 	defer rl.PopMatrix()
@@ -124,7 +124,7 @@ func (s Scene) Draw(camera Camera) {
 	}
 }
 
-func (s Scene) MoveCamera(c Camera, v rl.Vector3) Camera {
+func (s Scene) MoveCamera(c *Camera, v rl.Vector3) {
 	// Scale y in viewport to simulate vertical rotation
 	cosCameraY := float32(math.Cos(float64(c.Rotation.Y)))
 
@@ -134,8 +134,6 @@ func (s Scene) MoveCamera(c Camera, v rl.Vector3) Camera {
 		rl.MatrixRotateZ(c.Rotation.X),
 	))
 	c.Target = rl.Vector3Subtract(c.Target, d)
-
-	return c
 }
 
 func cmpVector3Distance(xDir, yDir int) func(a, b rl.Vector3) int {

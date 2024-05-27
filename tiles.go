@@ -22,8 +22,8 @@ type TileMap struct {
 	tiles [][][]int
 }
 
-func NewTileMap(tiles [][][]int) TileMap {
-	return TileMap{
+func NewTileMap(tiles [][][]int) *TileMap {
+	return &TileMap{
 		tiles: tiles,
 	}
 }

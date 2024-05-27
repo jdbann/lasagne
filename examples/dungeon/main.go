@@ -66,7 +66,7 @@ func main() {
 	scene := lasagne.NewScene(lasagne.SceneParams{
 		Objects: []lasagne.Object{barrelObject, chairObject},
 		TileMap: tileMap,
-		TileSet: *tileSet,
+		TileSet: tileSet,
 	})
 
 	camera := lasagne.NewCamera()
@@ -78,7 +78,7 @@ func main() {
 			camera.Rotation.X = rl.Wrap(camera.Rotation.X+(mouseDelta.X/float32(rl.GetScreenWidth()))*rl.Pi*2, 0, rl.Pi*2)
 			camera.Rotation.Y = rl.Clamp(camera.Rotation.Y+(mouseDelta.Y/float32(rl.GetScreenHeight()))*(rl.Pi/2), 0, rl.Pi/2-0.001)
 		} else if rl.IsKeyDown(rl.KeySpace) {
-			camera = scene.MoveCamera(camera, rl.Vector3{X: mouseDelta.X, Y: mouseDelta.Y})
+			scene.MoveCamera(camera, rl.Vector3{X: mouseDelta.X, Y: mouseDelta.Y})
 		}
 
 		camera.Zoom = rl.Clamp(camera.Zoom+rl.GetMouseWheelMove(), 0.5, 8)
