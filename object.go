@@ -4,8 +4,9 @@ import rl "github.com/gen2brain/raylib-go/raylib"
 
 type Object struct {
 	Position rl.Vector3
-	Texture  rl.Texture2D
+	Rotation float32
 	Size     rl.Vector3
+	Texture  rl.Texture2D
 }
 
 type renderValues struct {
@@ -47,7 +48,7 @@ func renderObject(object *Object, camera *Camera, v renderValues) {
 				rl.NewRectangle(float32(frame)*object.Size.X, 0, object.Size.X, object.Size.Y),
 				rl.NewRectangle(position.X, position.Y-v.zStep*object.Position.Z-v.frameStep*float32(frame)-float32(subframe), objectSize.X, objectSize.Y),
 				objectOrigin,
-				v.cameraRotation,
+				v.cameraRotation+object.Rotation*rl.Rad2deg,
 				rl.White,
 			)
 		}

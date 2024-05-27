@@ -41,12 +41,12 @@ func main() {
 			Y: 2,
 			Z: 1,
 		},
-		Texture: barrelTexture,
 		Size: rl.Vector3{
 			X: 14,
 			Y: 14,
 			Z: 8,
 		},
+		Texture: barrelTexture,
 	}
 	chairTexture := rl.LoadTexture("assets/Chair_strip12.png")
 	chairObject := &lasagne.Object{
@@ -55,12 +55,13 @@ func main() {
 			Y: 3,
 			Z: 1,
 		},
-		Texture: chairTexture,
+		Rotation: rl.Pi / 4,
 		Size: rl.Vector3{
 			X: 12,
 			Y: 12,
 			Z: 12,
 		},
+		Texture: chairTexture,
 	}
 
 	scene := lasagne.NewScene(lasagne.SceneParams{
